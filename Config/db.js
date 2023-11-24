@@ -2,7 +2,7 @@ const { default: mongoose } = require("mongoose")
 
 const dbConnect = () => {
     try {
-        const conn = mongoose.connect(process.env.MONGODBCONNECT_URL,{ useNewUrlParser: true, useUnifiedTopology: true })
+        const conn = mongoose.connect(process.env.MONGODBCONNECT_URL,{ useNewUrlParser: true, useUnifiedTopology: true})
         if(conn){
             conn.then((data)=>{
                 // console.log(data,"Databese Successfully Connected!")

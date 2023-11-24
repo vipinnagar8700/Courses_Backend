@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema({
     address: String,
     city: String,
     state: String,
+    image:{
+        type: String,
+        default: null,
+    },
+
     refreshToken: String,
     passwordChangeAt: Date,
     passwordResetToken: String,

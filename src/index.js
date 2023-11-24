@@ -9,6 +9,8 @@ app.use(cors())
 const userRoutes = require('../Routes/UserRouter')
 const morgan = require('morgan')
 app.use(morgan('dev'))
+const { upload } = require('../config/multerConfig');
+
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 const dbConnect = require('../config/db');
@@ -20,7 +22,7 @@ app.get('/', (req, res) => {
 
 })
 app.use('/api',userRoutes)
-
+app.use(upload);
 
 
 const port = process.env.PORT || 8000;

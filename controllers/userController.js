@@ -6,8 +6,6 @@ const jwt = require('jsonwebtoken');
 require('dotenv/config')
 
 
-
-
 // Registration API
 const register = asyncHandler(async (req, res) => {
     const { email, mobile, password, role } = req.body;
@@ -37,7 +35,7 @@ const register = asyncHandler(async (req, res) => {
                         password: newUser.password, // Assuming this is the password from newUser
                         mobile: newUser.mobile,
                         email: newUser.email,
-                        role:newUser.role,
+                        role: newUser.role,
                     });
                 } else if (newUser.role === 'student') {
                     roleData = await Student.create({
@@ -46,7 +44,7 @@ const register = asyncHandler(async (req, res) => {
                         password: newUser.password, // Assuming this is the password from newUser
                         mobile: newUser.mobile,
                         email: newUser.email,
-                        role:newUser.role,
+                        role: newUser.role,
                         // Add other required fields
                     });
                 }
@@ -105,29 +103,29 @@ const login = asyncHandler(async (req, res) => {
 
     if (findUser && (await findUser.isPasswordMatched(password))) {
         const ipAddress = req.ip; // Express automatically extracts the IP address from the request
-console.log(ipAddress,"IP ADDRESS!")
+        console.log(ipAddress, "IP ADDRESS!")
         // if (!findUser.permission) {
         //     return res.status(401).json({
         //         message: "You don't have permission to login",
         //         success: false
         //     });
         // } else {
-            const token = generateToken(findUser._id);
-            const refreshToken = generateRefreshToken(findUser._id);
-            const updateUser = await User.findByIdAndUpdate(findUser._id, {
-                refreshToken: refreshToken
-            }, { new: true }
-            );
+        const token = generateToken(findUser._id);
+        const refreshToken = generateRefreshToken(findUser._id);
+        const updateUser = await User.findByIdAndUpdate(findUser._id, {
+            refreshToken: refreshToken
+        }, { new: true }
+        );
 
-            res.cookie("refreshToken", refreshToken, {
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000
-            });
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000
+        });
         // }
 
         findUser.loginHistory.push({ ipAddress });
         await findUser.save();
-        
+
         const response = {
             _id: findUser._id,
             firstname: findUser.firstname,
@@ -240,34 +238,66 @@ const editUser = async (req, res) => {
         });
     }
 }
-const UpdateUsers = async (req, res) => {
-    const { id } = req.params;
-    const updateData = req.body; // Assuming you send the updated data in the request body
 
-    delete updateData.role;
-
+// Update the resizeAndConvert function to handle file resizing
+const resizeAndConvert = async (file) => {
     try {
-        const editUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
-
-        if (!editUser) {
-            res.status(200).json({
-                message: "User was not found!",
-            });
-        } else {
-            res.status(201).json({
-                message: "Data successfully updated!",
-                success: true,
-                data: editUser
-            });
-        }
+      const resizedBuffer = await sharp(file.buffer)
+        .resize({ width: 100, height: 100 })
+        .toBuffer();
+  
+      console.log('Resized Buffer Length:', resizedBuffer.length);
+      return resizedBuffer;
     } catch (error) {
-        res.status(500).json({
-            message: "Failed to update data!",
-            status: false
-        });
+      console.error('Error resizing image:', error);
+      throw new Error('Error processing image');
     }
-}
-
+  };
+  
+  // Update the UpdateUsers function to handle file resizing before updating
+  const UpdateUsers = async (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+  
+    try {
+      if (req.file) {
+        // Resize and convert the image if it exceeds 50 KB (not 25 KB as in the comments)
+        if (req.file.size > 100 * 1024) {
+          const resizedImageBuffer = await resizeAndConvert(req.file);
+          req.file.buffer = resizedImageBuffer;
+          console.log('Resized Buffer Length:', req.file.buffer.length);
+        }
+  
+        // Add the image filename to the update data
+        updateData.image = req.file.filename;
+      }
+  
+      // Remove 'role' from updateData
+      delete updateData.role;
+  
+      const editUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
+  
+      if (!editUser) {
+        return res.status(404).json({
+          message: 'User not found!',
+          success: false,
+        });
+      }
+  
+      return res.status(200).json({
+        message: 'Data successfully updated!',
+        success: true,
+        data: editUser,
+      });
+    } catch (error) {
+      console.error('Error updating user data:', error);
+      return res.status(500).json({
+        message: 'Failed to update data!',
+        success: false,
+      });
+    }
+  };
+  
 
 const deleteUser = async (req, res) => {
     const { id } = req.params;

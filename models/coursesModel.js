@@ -6,7 +6,10 @@ var courseSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        index: true,
+    },
+    CourseDescription: {
+        type: String,
+        required: true
     },
     languages: {
         type: String,
@@ -15,12 +18,22 @@ var courseSchema = new mongoose.Schema({
     price: {
         type: String,
         required: true,
-        unique: true,
     },
-    teachers_id: {
+
+    CourseCategory_id: {
         type: String,
-        required: true,
+        required: true
     },
+    duration: {
+        type: String,
+        default: null
+    },
+    class_mode: {
+        type: String,
+        required: true
+    }
+}, {
+    timestamps: true
 });
 
 //Export the model
